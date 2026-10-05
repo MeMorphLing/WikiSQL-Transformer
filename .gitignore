@@ -1,0 +1,19 @@
+# dataset (download with scripts/setup_data.sh)
+WikiSQL/
+starter/WikiSQL
+starter/*_pairs.jsonl
+starter/spm_corpus.txt
+
+# large or regenerable outputs
+results/*_raw.txt
+checkpoints/*.pt
+!checkpoints/best.pt
+
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.gradio/
+flagged/
+
+.vscode/
+.venv/

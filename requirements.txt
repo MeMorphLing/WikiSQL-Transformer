@@ -1,0 +1,8 @@
+torch>=2.1
+sentencepiece>=0.1.99
+records>=0.6.0      #  WikiSQL evaluator
+babel               #  WikiSQL evaluator
+tqdm
+tabulate            #  WikiSQL evaluator
+matplotlib
+gradio>=4.0         #  UI
