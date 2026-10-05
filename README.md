@@ -156,13 +156,7 @@ column-token mapping.
   is byte-identical to the given files.
 - Dev is used only for checkpoint selection and the greedy-vs-beam choice; test is decoded once.
 
-## Team
-
-| Member | Main ownership |
-|---|---|
-| _name_ | model/, checks.py, attention analysis |
-| _name_ | train.py, decode.py, evaluation, front end |
-
 ## References
 
-Vaswani et al. (2017), *Attention Is All You Need*. Zhong, Xiong and Socher (2017), *Seq2SQL* / WikiSQL.
+Vaswani et al. (2017), *Attention Is All You Need*. 
+Zhong, Xiong & Socher (2017), *Seq2SQL (arXiv 1709.00103). Introduces WikiSQL*
