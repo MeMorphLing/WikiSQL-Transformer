@@ -1,0 +1,33 @@
+{
+  "data": {
+    "train": {
+      "pairs": 56355,
+      "src_mean": 42.54600301659125,
+      "src_max": 222,
+      "tgt_mean": 14.768396770472895,
+      "tgt_max": 65,
+      "dropped": 19
+    },
+    "dev": {
+      "pairs": 8421,
+      "src_mean": 42.49186557415984,
+      "src_max": 167,
+      "tgt_mean": 14.786011162569766,
+      "tgt_max": 44,
+      "dropped": 0
+    },
+    "test": {
+      "pairs": 15878,
+      "src_mean": 42.67357349792165,
+      "src_max": 260,
+      "tgt_mean": 14.927257841037914,
+      "tgt_max": 46,
+      "dropped": 0
+    }
+  },
+  "gold_roundtrip_dev": {
+    "lf_accuracy": 0.9996437477734236,
+    "ex_accuracy": 0.9996437477734236,
+    "parse_failure_rate": 0.0
+  }
+}

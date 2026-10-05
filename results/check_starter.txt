@@ -1,0 +1,4 @@
+train_pairs.jsonl: kept 56336, skipped 19
+dev_pairs.jsonl: kept 8421, skipped 0
+src (64, 90) tgt (64, 33)
+encoder input (64, 90, 256) decoder input (64, 32, 256)
