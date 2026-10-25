@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import csv
 import random
+import sqlite3
 import sys
 
 import matplotlib
@@ -247,16 +248,23 @@ def attention(index: int = 0, n_stats: int = 1000, ckpt=common.BEST_CKPT):
 
 # ------------------------------------------------------------------ samples
 def _engine(split):
-    wikisql_root = str(common.WIKISQL)
-    if wikisql_root not in sys.path:
-        sys.path.insert(0, wikisql_root)
+    """WikiSQL's own engine, wrapped so a query that cannot run (e.g. a text value on a
+    numeric column) returns an error marker instead of crashing, the same way
+    evaluate.py scores it: as wrong."""
+    sys.path.insert(0, str(common.WIKISQL))
+    from lib.dbengine import DBEngine  # type: ignore[reportMissingImports]
+    from lib.query import Query  # type: ignore[reportMissingImports]
+    engine = DBEngine(str(common.DATA_DIR / f"{split}.db"))
+    run = engine.execute_query
 
-    # Import the official WikiSQL helpers lazily so editor/static analyzers do not
-    # complain about the project layout. The modules are only used at runtime.
-    dbengine = __import__("lib.dbengine", fromlist=["DBEngine"])
-    query_mod = __import__("lib.query", fromlist=["Query"])
+    def safe_execute(*args, **kwargs):
+        try:
+            return run(*args, **kwargs)
+        except (sqlite3.Error, TypeError, ValueError, KeyError) as e:
+            return f"ERROR: {e!r}"
 
-    return dbengine.DBEngine(str(common.DATA_DIR / f"{split}.db")), query_mod.Query
+    engine.execute_query = safe_execute
+    return engine, Query
 
 
 def failure_types(gold: dict, pred: dict | None) -> list[str]:
