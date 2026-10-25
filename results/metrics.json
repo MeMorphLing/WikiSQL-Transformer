@@ -29,5 +29,45 @@
     "lf_accuracy": 0.9996437477734236,
     "ex_accuracy": 0.9996437477734236,
     "parse_failure_rate": 0.0
+  },
+  "training": {
+    "trainable_parameters": 7577600,
+    "epochs_trained": 20,
+    "best_epoch": 18,
+    "best_dev_loss": 1.5245,
+    "training_minutes": 11.9,
+    "device": "Tesla T4",
+    "total_steps": 17620
+  },
+  "dev_greedy": {
+    "lf_accuracy": 0.47761548509678187,
+    "ex_accuracy": 0.5472034200213751,
+    "parse_failure_rate": 0.0028500178126113287
+  },
+  "components_dev_greedy": {
+    "sel_accuracy": 0.7633297708110676,
+    "agg_accuracy": 0.8959743498396865,
+    "where_accuracy": 0.6019475121719511
+  },
+  "dev_beam": {
+    "lf_accuracy": 0.48094050587816173,
+    "ex_accuracy": 0.5507659422871393,
+    "parse_failure_rate": 0.00273126707041919
+  },
+  "components_dev_beam": {
+    "sel_accuracy": 0.7608360052250327,
+    "agg_accuracy": 0.8954993468709179,
+    "where_accuracy": 0.6082413015081344
+  },
+  "final_decoding": "beam",
+  "attention_alignment": {
+    "examples": 1000,
+    "column_tokens": 2079,
+    "aligned_rate": 0.031746031746031744
+  },
+  "test_beam": {
+    "lf_accuracy": 0.46819498677415294,
+    "ex_accuracy": 0.5399924423730948,
+    "parse_failure_rate": 0.001700466053659151
   }
 }
