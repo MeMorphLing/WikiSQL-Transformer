@@ -24,19 +24,32 @@ import sys
 import matplotlib
 
 matplotlib.use("Agg")
-import common
 import matplotlib.pyplot as plt
 import torch
-from common import BOS_ID, EOS_ID, FIGURES, METRICS, RESULTS
-from dataset import SQLDataset, collate
-from decode import (
-    ColumnConstraint,
-    beam_search,
-    greedy_decode,
-    parse_to_wikisql,
-    to_readable_sql,
-)
 from tqdm import tqdm
+
+try:
+    from . import common
+    from .common import BOS_ID, EOS_ID, FIGURES, METRICS, RESULTS
+    from .dataset import SQLDataset, collate
+    from .decode import (
+        ColumnConstraint,
+        beam_search,
+        greedy_decode,
+        parse_to_wikisql,
+        to_readable_sql,
+    )
+except ImportError:  # pragma: no cover - allows running as a script from the repo root
+    import common
+    from common import BOS_ID, EOS_ID, FIGURES, METRICS, RESULTS
+    from dataset import SQLDataset, collate
+    from decode import (
+        ColumnConstraint,
+        beam_search,
+        greedy_decode,
+        parse_to_wikisql,
+        to_readable_sql,
+    )
 
 DECODINGS = ("greedy", "beam")
 
@@ -234,13 +247,16 @@ def attention(index: int = 0, n_stats: int = 1000, ckpt=common.BEST_CKPT):
 
 # ------------------------------------------------------------------ samples
 def _engine(split):
-    sys.path.insert(0, str(common.WIKISQL))
-    from lib.dbengine import (
-        DBEngine,  # official WikiSQL code, used only to label samples
-    )
-    from lib.query import Query
+    wikisql_root = str(common.WIKISQL)
+    if wikisql_root not in sys.path:
+        sys.path.insert(0, wikisql_root)
 
-    return DBEngine(str(common.DATA_DIR / f"{split}.db")), Query
+    # Import the official WikiSQL helpers lazily so editor/static analyzers do not
+    # complain about the project layout. The modules are only used at runtime.
+    dbengine = __import__("lib.dbengine", fromlist=["DBEngine"])
+    query_mod = __import__("lib.query", fromlist=["Query"])
+
+    return dbengine.DBEngine(str(common.DATA_DIR / f"{split}.db")), query_mod.Query
 
 
 def failure_types(gold: dict, pred: dict | None) -> list[str]:
@@ -283,12 +299,14 @@ def samples(decoding: str, split="dev", n_each=5, seed=0):
         q = p.get("query")
         gold_q = Query.from_dict(ex["sql"])
         lf = q is not None and Query.from_dict(q) == gold_q
-        try:
-            ex_ok = q is not None and engine.execute_query(
-                ex["table_id"], Query.from_dict(q)
-            ) == engine.execute_query(ex["table_id"], gold_q)
-        except (KeyError, TypeError, ValueError):
-            ex_ok = False
+        ex_ok = False
+        if q is not None:
+            try:
+                ex_ok = engine.execute_query(ex["table_id"], Query.from_dict(q)) == \
+                    engine.execute_query(ex["table_id"], gold_q)
+            except (TypeError, ValueError):
+                # Predicted value cannot be cast for a numeric column, so the query is invalid.
+                ex_ok = False
         if lf and ex_ok and len(correct) < n_each:
             correct.append((i, []))
         elif not lf and len(wrong) < n_each:
@@ -304,8 +322,10 @@ def samples(decoding: str, split="dev", n_each=5, seed=0):
     lines = [
         f"# Qualitative samples ({split}, {decoding} decoding)",
         "",
-        "Correct = logical form and execution both match the gold query. ",
-        "Values are lower-cased by the preprocessing, so the generated SQL is lower-case.",
+        (
+            "Correct = logical form and execution both match the gold query. "
+            "Values are lower-cased by the preprocessing, so the generated SQL is lower-case."
+        ),
         "",
     ]
     for title, group in (("Correct", correct), ("Wrong", wrong)):
@@ -315,7 +335,7 @@ def samples(decoding: str, split="dev", n_each=5, seed=0):
             header = tables[ex["table_id"]]["header"]
             q = preds[i].get("query")
             lines += [
-                f"### {title} {k} (dev #{i})",
+                f"### {title} {k} ({split} #{i})",
                 "",
                 f"**Question:** {ex['question']}  ",
                 f"**Columns:** {', '.join(header)}  ",
