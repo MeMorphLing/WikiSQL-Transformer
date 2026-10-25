@@ -162,11 +162,13 @@ def _cross_attention(model, sp, src_ids, gen_ids, device):
 
 
 def _column_spans(src_pieces):
-    """source piece index -> column number, for every <cK> token and its name pieces."""
+    """source piece index -> column number: the '\u2581' right before <cK>, <cK> itself, and its name pieces."""
     owner, current = {}, None
     for i, p in enumerate(src_pieces):
         if p.startswith("<c") and p.endswith(">") and p[2:-1].isdigit():
             current = int(p[2:-1])
+            if i > 0 and src_pieces[i - 1] == "\u2581":
+                owner[i - 1] = current
         if current is not None and p != "</s>":
             owner[i] = current
     return owner
@@ -252,15 +254,15 @@ def _engine(split):
     numeric column) returns an error marker instead of crashing, the same way
     evaluate.py scores it: as wrong."""
     sys.path.insert(0, str(common.WIKISQL))
-    from lib.dbengine import DBEngine  # type: ignore[reportMissingImports]
-    from lib.query import Query  # type: ignore[reportMissingImports]
+    from lib.dbengine import DBEngine
+    from lib.query import Query
     engine = DBEngine(str(common.DATA_DIR / f"{split}.db"))
     run = engine.execute_query
 
     def safe_execute(*args, **kwargs):
         try:
             return run(*args, **kwargs)
-        except (sqlite3.Error, TypeError, ValueError, KeyError) as e:
+        except Exception as e:  # noqa: BLE001
             return f"ERROR: {e!r}"
 
     engine.execute_query = safe_execute
