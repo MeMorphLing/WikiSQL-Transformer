@@ -7,11 +7,14 @@ directory at the WikiSQL checkout in the repository root.
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import random
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+import torch
 
 ROOT = Path(__file__).resolve().parent
 STARTER = ROOT / "starter"
@@ -27,13 +30,33 @@ METRICS = RESULTS / "metrics.json"
 if str(STARTER) not in sys.path:
     sys.path.insert(0, str(STARTER))
 
-import data_prep  # noqa: E402  (starter module)
-import torch  # noqa: E402
+try:
+    import data_prep  # type: ignore[import-not-found]
+except ModuleNotFoundError:
+    spec = importlib.util.spec_from_file_location("data_prep", STARTER / "data_prep.py")
+    if spec is None or spec.loader is None:
+        raise
+    data_prep = importlib.util.module_from_spec(spec)
+    sys.modules["data_prep"] = data_prep
+    spec.loader.exec_module(data_prep)
 
 data_prep.DATA_DIR = DATA_DIR  # absolute path; the starter file itself is untouched
 
-from data_prep import AGG_OPS, COND_OPS, MAX_COLS  # noqa: E402,F401
-from tokenizer import BOS_ID, EOS_ID, PAD_ID, UNK_ID  # noqa: E402,F401
+from data_prep import AGG_OPS, COND_OPS, MAX_COLS  # type: ignore[import-not-found]
+
+try:
+    from tokenizer import BOS_ID, EOS_ID, PAD_ID, UNK_ID  # type: ignore[import-not-found]
+except ModuleNotFoundError:
+    spec = importlib.util.spec_from_file_location("tokenizer", STARTER / "tokenizer.py")
+    if spec is None or spec.loader is None:
+        raise
+    tokenizer = importlib.util.module_from_spec(spec)
+    sys.modules["tokenizer"] = tokenizer
+    spec.loader.exec_module(tokenizer)
+    BOS_ID = tokenizer.BOS_ID
+    EOS_ID = tokenizer.EOS_ID
+    PAD_ID = tokenizer.PAD_ID
+    UNK_ID = tokenizer.UNK_ID
 
 SPLITS = ("train", "dev", "test")
 
@@ -94,8 +117,7 @@ def read_jsonl(path) -> list[dict]:
 def write_jsonl(path, rows) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        f.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)
 
 
 def load_split(split: str):
@@ -129,7 +151,7 @@ def run_official_evaluator(split: str, pred_path) -> dict:
     import subprocess
     pred_path = Path(pred_path).resolve()
     cmd = [sys.executable, "evaluate.py", f"data/{split}.jsonl", f"data/{split}.db", str(pred_path)]
-    res = subprocess.run(cmd, cwd=WIKISQL, capture_output=True, text=True)
+    res = subprocess.run(cmd, cwd=WIKISQL, capture_output=True, text=True, check=False)
     if res.returncode != 0:
         raise RuntimeError(f"official evaluator failed:\n{res.stderr[-2000:]}")
     out = json.loads(res.stdout[res.stdout.index("{"):])
