@@ -13,8 +13,7 @@ Model      select <c2> where <c0> = terrence ross
 SQL        SELECT "Nationality" FROM table WHERE "Player" = 'terrence ross'
 ```
 
-**Medium blog:** _<link>_ · **LinkedIn post:** _<link>_
-
+**Medium blog:** [I Built a Transformer From Scratch That Turns Plain English Into SQL](https://medium.com/@hassantahir318/i-built-a-transformer-from-scratch-that-turns-plain-english-into-sql-e0cacd34acc0) · **LinkedIn post:** (https://www.linkedin.com/in/muhammad-hassan-tahir-ba2a94220/)
 ---
 
 ## Headline results
